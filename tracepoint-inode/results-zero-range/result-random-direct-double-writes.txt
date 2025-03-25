@@ -1,0 +1,65 @@
+User process ID: 1151039
+Running function: random_direct_double_writes, num_blocks: 10000
+**************** Initial ***************
+key: EventInfo { pid: 1151039, tgid: 1151039, comm: "tracepoint-inod\0", event: Ext4MarkInodeDirty }, value: 1
+**************** After generating timestamp ***************
+key: EventInfo { pid: 1151039, tgid: 1151039, comm: "tracepoint-inod\0", event: Ext4MarkInodeDirty }, value: 1
+**************** After creating file with O_DIRECT ***************
+key: EventInfo { pid: 1151039, tgid: 1151039, comm: "tracepoint-inod\0", event: Ext4MarkInodeDirty }, value: 5
+**************** (1) After writing blocks with pwrite ***************
+key: EventInfo { pid: 10583, tgid: 10558, comm: "code\0\0\0\0\0\0\0\0\0\0\0\0", event: Ext4MarkInodeDirty }, value: 1
+key: EventInfo { pid: 1151039, tgid: 1151039, comm: "tracepoint-inod\0", event: Ext4MarkInodeDirty }, value: 20229
+key: EventInfo { pid: 1151039, tgid: 1151039, comm: "tracepoint-inod\0", event: Ext4AllocateBlocks }, value: 10017
+**************** (2) After writing blocks with pwrite ***************
+key: EventInfo { pid: 974028, tgid: 974028, comm: "systemd-journal\0", event: Ext4MarkInodeDirty }, value: 3
+key: EventInfo { pid: 10583, tgid: 10558, comm: "code\0\0\0\0\0\0\0\0\0\0\0\0", event: Ext4MarkInodeDirty }, value: 1
+key: EventInfo { pid: 1151039, tgid: 1151039, comm: "tracepoint-inod\0", event: Ext4MarkInodeDirty }, value: 20349
+key: EventInfo { pid: 1151039, tgid: 1151039, comm: "tracepoint-inod\0", event: Ext4AllocateBlocks }, value: 10017
+**************** After fsyncing file ***************
+key: EventInfo { pid: 974028, tgid: 974028, comm: "systemd-journal\0", event: Ext4MarkInodeDirty }, value: 3
+key: EventInfo { pid: 10583, tgid: 10558, comm: "code\0\0\0\0\0\0\0\0\0\0\0\0", event: Ext4MarkInodeDirty }, value: 1
+key: EventInfo { pid: 1151039, tgid: 1151039, comm: "tracepoint-inod\0", event: Ext4MarkInodeDirty }, value: 20350
+key: EventInfo { pid: 1151039, tgid: 1151039, comm: "tracepoint-inod\0", event: Ext4AllocateBlocks }, value: 10017
+     Value | Histogram                                          | Count(%)
+----------------------------------------------------------------------------------
+<    10000 |                                                    |          0(0.00)
+     10999 | *************                                      |       2589(0.26)
+     11999 | **************                                     |       2718(0.27)
+     12999 | *********************                              |       4136(0.41)
+     13999 | **                                                 |        364(0.04)
+     14999 |                                                    |         68(0.01)
+     15999 |                                                    |         23(0.00)
+     16999 |                                                    |         45(0.00)
+     17999 |                                                    |          6(0.00)
+     18999 |                                                    |          1(0.00)
+     19999 |                                                    |          1(0.00)
+     20999 |                                                    |          1(0.00)
+     21999 |                                                    |          2(0.00)
+     22999 |                                                    |          3(0.00)
+     23999 |                                                    |          3(0.00)
+     24999 |                                                    |          2(0.00)
+     25999 |                                                    |          0(0.00)
+     26999 |                                                    |          2(0.00)
+     27999 |                                                    |          0(0.00)
+     28999 |                                                    |          0(0.00)
+     29999 |                                                    |          2(0.00)
+     30999 |                                                    |          0(0.00)
+     31999 |                                                    |          0(0.00)
+     32999 |                                                    |          0(0.00)
+     33999 |                                                    |          0(0.00)
+     34999 |                                                    |          0(0.00)
+     35999 |                                                    |          0(0.00)
+     36999 |                                                    |          0(0.00)
+     37999 |                                                    |          1(0.00)
+     38999 |                                                    |          7(0.00)
+     39999 |                                                    |          4(0.00)
+     40999 |                                                    |          3(0.00)
+     41999 |                                                    |          2(0.00)
+     42999 |                                                    |         13(0.00)
+     43999 |                                                    |          3(0.00)
+     44999 |                                                    |          1(0.00)
+>    50000 |                                                    |          0(0.00)
+Mean: 11878.378799999999
+25th percentile: 10967
+Median: 11927
+75th percentile: 12295

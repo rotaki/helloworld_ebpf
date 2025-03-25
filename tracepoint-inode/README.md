@@ -1,4 +1,4 @@
-# helloworld
+# tracepoint-inode
 
 ## Prerequisites
 
@@ -25,10 +25,9 @@ program.
 Cross compilation should work on both Intel and Apple Silicon Macs.
 
 ```shell
-CC=${ARCH}-linux-musl-gcc cargo build --package helloworld --release \
+CC=${ARCH}-linux-musl-gcc cargo build --package tracepoint-inode --release \
   --target=${ARCH}-unknown-linux-musl \
   --config=target.${ARCH}-unknown-linux-musl.linker=\"${ARCH}-linux-musl-gcc\"
 ```
-The cross-compiled program `target/${ARCH}-unknown-linux-musl/release/helloworld` can be
+The cross-compiled program `target/${ARCH}-unknown-linux-musl/release/tracepoint-inode` can be
 copied to a Linux server or VM and run there.
-

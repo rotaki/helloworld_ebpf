@@ -1,0 +1,62 @@
+User process ID: 1155391
+Running function: sequential_direct, num_blocks: 10000
+**************** Initial ***************
+key: EventInfo { pid: 1155391, tgid: 1155391, comm: "tracepoint-inod\0", event: Ext4MarkInodeDirty }, value: 1
+**************** After generating timestamp ***************
+key: EventInfo { pid: 1155391, tgid: 1155391, comm: "tracepoint-inod\0", event: Ext4MarkInodeDirty }, value: 1
+**************** After creating file with O_DIRECT ***************
+key: EventInfo { pid: 1155391, tgid: 1155391, comm: "tracepoint-inod\0", event: Ext4MarkInodeDirty }, value: 5
+**************** After writing blocks with pwrite ***************
+key: EventInfo { pid: 1155391, tgid: 1155391, comm: "tracepoint-inod\0", event: Ext4MarkInodeDirty }, value: 28375
+key: EventInfo { pid: 1155391, tgid: 1155391, comm: "tracepoint-inod\0", event: Ext4AllocateBlocks }, value: 10001
+**************** After fsyncing file ***************
+key: EventInfo { pid: 1155391, tgid: 1155391, comm: "tracepoint-inod\0", event: Ext4MarkInodeDirty }, value: 28376
+key: EventInfo { pid: 1155391, tgid: 1155391, comm: "tracepoint-inod\0", event: Ext4AllocateBlocks }, value: 10001
+     Value | Histogram                                          | Count(%)
+----------------------------------------------------------------------------------
+<    10000 |                                                    |          0(0.00)
+     10999 |                                                    |          0(0.00)
+     11999 |                                                    |          0(0.00)
+     12999 |                                                    |          0(0.00)
+     13999 |                                                    |          0(0.00)
+     14999 |                                                    |          0(0.00)
+     15999 |                                                    |          2(0.00)
+     16999 | *********                                          |       1761(0.18)
+     17999 | **************************************             |       7699(0.77)
+     18999 | **                                                 |        339(0.03)
+     19999 |                                                    |         92(0.01)
+     20999 |                                                    |         47(0.00)
+     21999 |                                                    |         15(0.00)
+     22999 |                                                    |          3(0.00)
+     23999 |                                                    |          1(0.00)
+     24999 |                                                    |          0(0.00)
+     25999 |                                                    |          1(0.00)
+     26999 |                                                    |          0(0.00)
+     27999 |                                                    |          0(0.00)
+     28999 |                                                    |          1(0.00)
+     29999 |                                                    |          1(0.00)
+     30999 |                                                    |          0(0.00)
+     31999 |                                                    |          2(0.00)
+     32999 |                                                    |          0(0.00)
+     33999 |                                                    |          1(0.00)
+     34999 |                                                    |          0(0.00)
+     35999 |                                                    |          0(0.00)
+     36999 |                                                    |          0(0.00)
+     37999 |                                                    |          0(0.00)
+     38999 |                                                    |          0(0.00)
+     39999 |                                                    |          0(0.00)
+     40999 |                                                    |          0(0.00)
+     41999 |                                                    |          0(0.00)
+     42999 |                                                    |          0(0.00)
+     43999 |                                                    |          0(0.00)
+     44999 |                                                    |         17(0.00)
+     45999 |                                                    |          9(0.00)
+     46999 |                                                    |          4(0.00)
+     47999 |                                                    |          3(0.00)
+     48999 |                                                    |          0(0.00)
+     49999 |                                                    |          0(0.00)
+>    50000 |                                                    |          1(0.00)
+Mean: 17482.353600000002
+25th percentile: 17183
+Median: 17343
+75th percentile: 17519

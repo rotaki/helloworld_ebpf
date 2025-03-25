@@ -1,0 +1,80 @@
+User process ID: 1074382
+Running function: sequential_direct_double_writes, num_blocks: 10000
+**************** Initial ***************
+key: EventInfo { pid: 1074382, tgid: 1074382, comm: "tracepoint-inod\0", event: Ext4MarkInodeDirty }, value: 1
+**************** After generating timestamp ***************
+key: EventInfo { pid: 1074382, tgid: 1074382, comm: "tracepoint-inod\0", event: Ext4MarkInodeDirty }, value: 1
+**************** After creating file with O_DIRECT ***************
+key: EventInfo { pid: 1074382, tgid: 1074382, comm: "tracepoint-inod\0", event: Ext4MarkInodeDirty }, value: 5
+**************** (1) After writing blocks with pwrite ***************
+key: EventInfo { pid: 10581, tgid: 10558, comm: "code\0\0\0\0\0\0\0\0\0\0\0\0", event: Ext4MarkInodeDirty }, value: 4
+key: EventInfo { pid: 974028, tgid: 974028, comm: "systemd-journal\0", event: Ext4MarkInodeDirty }, value: 3
+key: EventInfo { pid: 10583, tgid: 10558, comm: "code\0\0\0\0\0\0\0\0\0\0\0\0", event: Ext4MarkInodeDirty }, value: 1
+key: EventInfo { pid: 1026716, tgid: 1026716, comm: "kworker/u32:4\0\0\0", event: Ext4MarkInodeDirty }, value: 2
+key: EventInfo { pid: 1074382, tgid: 1074382, comm: "tracepoint-inod\0", event: Ext4AllocateBlocks }, value: 10001
+key: EventInfo { pid: 1074382, tgid: 1074382, comm: "tracepoint-inod\0", event: Ext4MarkInodeDirty }, value: 20331
+key: EventInfo { pid: 10581, tgid: 10558, comm: "code\0\0\0\0\0\0\0\0\0\0\0\0", event: Ext4AllocateBlocks }, value: 1
+**************** (2) After writing blocks with pwrite ***************
+key: EventInfo { pid: 10581, tgid: 10558, comm: "code\0\0\0\0\0\0\0\0\0\0\0\0", event: Ext4MarkInodeDirty }, value: 4
+key: EventInfo { pid: 974028, tgid: 974028, comm: "systemd-journal\0", event: Ext4MarkInodeDirty }, value: 3
+key: EventInfo { pid: 10583, tgid: 10558, comm: "code\0\0\0\0\0\0\0\0\0\0\0\0", event: Ext4MarkInodeDirty }, value: 1
+key: EventInfo { pid: 1026716, tgid: 1026716, comm: "kworker/u32:4\0\0\0", event: Ext4MarkInodeDirty }, value: 2
+key: EventInfo { pid: 1074382, tgid: 1074382, comm: "tracepoint-inod\0", event: Ext4AllocateBlocks }, value: 10001
+key: EventInfo { pid: 1074382, tgid: 1074382, comm: "tracepoint-inod\0", event: Ext4MarkInodeDirty }, value: 20455
+key: EventInfo { pid: 10581, tgid: 10558, comm: "code\0\0\0\0\0\0\0\0\0\0\0\0", event: Ext4AllocateBlocks }, value: 1
+**************** After fsyncing file ***************
+key: EventInfo { pid: 10581, tgid: 10558, comm: "code\0\0\0\0\0\0\0\0\0\0\0\0", event: Ext4MarkInodeDirty }, value: 4
+key: EventInfo { pid: 974028, tgid: 974028, comm: "systemd-journal\0", event: Ext4MarkInodeDirty }, value: 3
+key: EventInfo { pid: 10583, tgid: 10558, comm: "code\0\0\0\0\0\0\0\0\0\0\0\0", event: Ext4MarkInodeDirty }, value: 1
+key: EventInfo { pid: 1026716, tgid: 1026716, comm: "kworker/u32:4\0\0\0", event: Ext4MarkInodeDirty }, value: 2
+key: EventInfo { pid: 1074382, tgid: 1074382, comm: "tracepoint-inod\0", event: Ext4AllocateBlocks }, value: 10001
+key: EventInfo { pid: 1074382, tgid: 1074382, comm: "tracepoint-inod\0", event: Ext4MarkInodeDirty }, value: 20464
+key: EventInfo { pid: 10581, tgid: 10558, comm: "code\0\0\0\0\0\0\0\0\0\0\0\0", event: Ext4AllocateBlocks }, value: 1
+     Value | Histogram                                          | Count(%)
+----------------------------------------------------------------------------------
+<    10000 |                                                    |          0(0.00)
+     10999 | **********************************                 |       6723(0.67)
+     11999 | ********                                           |       1613(0.16)
+     12999 | *****                                              |       1040(0.10)
+     13999 | *                                                  |        276(0.03)
+     14999 | *                                                  |        135(0.01)
+     15999 |                                                    |         82(0.01)
+     16999 |                                                    |         31(0.00)
+     17999 |                                                    |          7(0.00)
+     18999 |                                                    |         10(0.00)
+     19999 |                                                    |          8(0.00)
+     20999 |                                                    |          3(0.00)
+     21999 |                                                    |         13(0.00)
+     22999 |                                                    |         10(0.00)
+     23999 |                                                    |          3(0.00)
+     24999 |                                                    |          3(0.00)
+     25999 |                                                    |          3(0.00)
+     26999 |                                                    |          2(0.00)
+     27999 |                                                    |          1(0.00)
+     28999 |                                                    |          1(0.00)
+     29999 |                                                    |          0(0.00)
+     30999 |                                                    |          1(0.00)
+     31999 |                                                    |          0(0.00)
+     32999 |                                                    |          0(0.00)
+     33999 |                                                    |          0(0.00)
+     34999 |                                                    |          0(0.00)
+     35999 |                                                    |          1(0.00)
+     36999 |                                                    |          0(0.00)
+     37999 |                                                    |          0(0.00)
+     38999 |                                                    |         16(0.00)
+     39999 |                                                    |          7(0.00)
+     40999 |                                                    |          4(0.00)
+     41999 |                                                    |          3(0.00)
+     42999 |                                                    |          1(0.00)
+     43999 |                                                    |          1(0.00)
+     44999 |                                                    |          0(0.00)
+     45999 |                                                    |          0(0.00)
+     46999 |                                                    |          0(0.00)
+     47999 |                                                    |          0(0.00)
+     48999 |                                                    |          0(0.00)
+     49999 |                                                    |          0(0.00)
+>    50000 |                                                    |          1(0.00)
+Mean: 11354.604000000032
+25th percentile: 10703
+Median: 10823
+75th percentile: 11447

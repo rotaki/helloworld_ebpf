@@ -31,11 +31,3 @@ CC=${ARCH}-linux-musl-gcc cargo build --package kprobe-helloworld --release \
 ```
 The cross-compiled program `target/${ARCH}-unknown-linux-musl/release/kprobe-helloworld` can be
 copied to a Linux server or VM and run there.
-
-## Memo
-
-To find a event name where you want to attach a kprobe, use the following command:
-
-```shell
-cat /proc/kallsyms | grep -i ${KEYWORD}
-```

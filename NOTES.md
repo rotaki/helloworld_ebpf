@@ -1,6 +1,38 @@
 # Notes
 
+## Tracepoints
 
+You can list available tracepoints in your Linux system using one of the following methods:
+
+1. **Via the DebugFS Interface:**  
+   Most Linux systems have the tracepoints listed in the file:  
+   ```bash
+   cat /sys/kernel/debug/tracing/available_events
+   ```  
+   This command will print all the available tracepoints grouped by subsystem (e.g., sched, syscalls, block, etc.). Note that you may need root privileges and ensure that DebugFS is mounted (commonly at `/sys/kernel/debug`).
+
+2. **Using bpftrace:**  
+   If you have bpftrace installed, you can list tracepoints with:  
+   ```bash
+   sudo bpftrace -l tracepoint:*
+   ```  
+   This command shows a list of all tracepoints that you can attach your eBPF programs to.
+
+Both methods provide you with the complete list of tracepoints available on your system.
+
+The tracepoint category and event name can be found by the following command:
+
+```shell
+ find /sys/kernel/tracing/events/ -type f -name id | grep ${KEYWORD}
+```
+
+## kprobe
+
+To find a event name where you want to attach a kprobe, use the following command:
+
+```shell
+cat /proc/kallsyms | grep -i ${KEYWORD}
+```
 
 ## EbpfContext IDs
 
