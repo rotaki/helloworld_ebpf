@@ -1,30 +1,22 @@
 use std::{
     fs::{File, OpenOptions},
-    hint::black_box,
     io::Write,
-    num,
     os::unix::fs::OpenOptionsExt,
     time::Instant,
 };
 
-use aya::{
-    maps::{HashMap, Map, MapData},
-    programs::TracePoint,
-    Ebpf, Pod,
-};
+use aya::{maps::HashMap, programs::TracePoint, Ebpf, Pod};
 #[rustfmt::skip]
 use rand::seq::SliceRandom;
 use std::{io, os::unix::io::AsRawFd};
 
 use clap::{Parser, ValueEnum};
 use hdrhistogram::Histogram;
-use libc;
-use tokio::signal;
 use tracepoint_inode_common::EventInfo;
 
 const BLOCK_SIZE: usize = 4096;
 
-#[derive(Copy, Clone)]
+#[derive(PartialEq, Eq, Hash, Copy, Clone)]
 #[repr(transparent)]
 struct EventInfoWrapper(EventInfo);
 unsafe impl Pod for EventInfoWrapper {}
@@ -144,6 +136,32 @@ fn create_file(ts: u64) -> File {
         })
 }
 
+fn create_odirect_file(file_path: &str) -> File {
+    OpenOptions::new()
+        .read(true)
+        .write(true)
+        .create(true)
+        .custom_flags(libc::O_DIRECT)
+        .open(file_path)
+        .unwrap_or_else(|e| {
+            eprintln!("open error: {}", e);
+            std::process::exit(1);
+        })
+}
+
+fn create_odirect_osync_file(file_path: &str) -> File {
+    OpenOptions::new()
+        .read(true)
+        .write(true)
+        .create(true)
+        .custom_flags(libc::O_DIRECT | libc::O_SYNC)
+        .open(file_path)
+        .unwrap_or_else(|e| {
+            eprintln!("open error: {}", e);
+            std::process::exit(1);
+        })
+}
+
 fn write_block_to_file(file: &mut File, block: &[u8]) {
     file.write_all(block).unwrap_or_else(|e| {
         eprintln!("write error: {}", e);
@@ -185,9 +203,11 @@ fn print_histogram_stats(
 ) {
     plot_histogram(histogram, step, min_threshold, max_threshold);
     println!("Mean: {}", histogram.mean());
+    println!("2th percentile: {}", histogram.value_at_quantile(0.02));
     println!("25th percentile: {}", histogram.value_at_quantile(0.25));
     println!("Median: {}", histogram.value_at_quantile(0.5));
     println!("75th percentile: {}", histogram.value_at_quantile(0.75));
+    println!("98th percentile: {}", histogram.value_at_quantile(0.98));
 }
 
 pub fn plot_histogram(
@@ -199,7 +219,7 @@ pub fn plot_histogram(
     let max_bar_width = 50;
     let max_count = histogram.len();
 
-    println!("{:>10} | {:<50} | {}", "Value", "Histogram", "Count(%)");
+    println!("{:>10} | {:<50} | Count(%)", "Value", "Histogram");
     println!("{}", "-".repeat(10 + 3 + 50 + 3 + 5 + 1 + 10));
 
     if let Some(min) = min_threshold {
@@ -259,11 +279,12 @@ pub fn plot_histogram(
 fn sequential_with_kpc(ebpf: &mut Ebpf, args: &Args) -> anyhow::Result<Histogram<u64>> {
     let map = ebpf.map_mut("EXT4INODE").unwrap();
     let hashmap: HashMap<_, EventInfoWrapper, u64> = HashMap::try_from(map)?;
-    print_hashmap("Initial", &hashmap);
+    let cum = std::collections::HashMap::new();
+    let cum = print_hashmap("Initial", &hashmap, cum);
     let ts = timestamp();
-    print_hashmap("After generating timestamp", &hashmap);
+    let cum = print_hashmap("After generating timestamp", &hashmap, cum);
     let mut file = create_file(ts);
-    print_hashmap("After creating file", &hashmap);
+    let cum = print_hashmap("After creating file", &hashmap, cum);
 
     let block = [1u8; BLOCK_SIZE];
     let mut histogram =
@@ -275,9 +296,9 @@ fn sequential_with_kpc(ebpf: &mut Ebpf, args: &Args) -> anyhow::Result<Histogram
         let elapsed = start.elapsed().as_nanos();
         histogram.record(elapsed as u64).unwrap();
     }
-    print_hashmap("After writing blocks to file", &hashmap);
+    let cum = print_hashmap("After writing blocks to file", &hashmap, cum);
     fsync_file(&mut file);
-    print_hashmap("After fsyncing file", &hashmap);
+    let cum = print_hashmap("After fsyncing file", &hashmap, cum);
     Ok(histogram)
 }
 
@@ -287,11 +308,12 @@ fn sequential_with_kpc_with_fallocate(
 ) -> anyhow::Result<Histogram<u64>> {
     let map = ebpf.map_mut("EXT4INODE").unwrap();
     let hashmap: HashMap<_, EventInfoWrapper, u64> = HashMap::try_from(map)?;
-    print_hashmap("Initial", &hashmap);
+    let cum = std::collections::HashMap::new();
+    let cum = print_hashmap("Initial", &hashmap, cum);
     let ts = timestamp();
-    print_hashmap("After generating timestamp", &hashmap);
+    let cum = print_hashmap("After generating timestamp", &hashmap, cum);
     let mut file = create_file(ts);
-    print_hashmap("After creating file", &hashmap);
+    let cum = print_hashmap("After creating file", &hashmap, cum);
 
     let file_size = BLOCK_SIZE * args.num_blocks;
     let fd = file.as_raw_fd();
@@ -306,7 +328,7 @@ fn sequential_with_kpc_with_fallocate(
             return Err(io::Error::last_os_error().into());
         }
     }
-    print_hashmap("After fallocate to file", &hashmap);
+    let cum = print_hashmap("After fallocate to file", &hashmap, cum);
 
     let block = [1u8; BLOCK_SIZE];
     let mut histogram =
@@ -318,9 +340,9 @@ fn sequential_with_kpc_with_fallocate(
         let elapsed = start.elapsed().as_nanos();
         histogram.record(elapsed as u64).unwrap();
     }
-    print_hashmap("After writing blocks to file", &hashmap);
+    let cum = print_hashmap("After writing blocks to file", &hashmap, cum);
     fsync_file(&mut file);
-    print_hashmap("After fsyncing file", &hashmap);
+    let cum = print_hashmap("After fsyncing file", &hashmap, cum);
     Ok(histogram)
 }
 
@@ -329,14 +351,14 @@ fn sequential_direct(ebpf: &mut Ebpf, args: &Args) -> anyhow::Result<Histogram<u
         Histogram::<u64>::new_with_bounds(1, 1_000_000_000, 3).expect("failed to create histogram");
     let map = ebpf.map_mut("EXT4INODE").unwrap();
     let hashmap: HashMap<_, EventInfoWrapper, u64> = HashMap::try_from(map)?;
-    print_hashmap("Initial", &hashmap);
+    let cum = std::collections::HashMap::new();
+    let cum = print_hashmap("Initial", &hashmap, cum);
     let file_path = file_name(&Function::SequentialDirect);
-    let file = OpenOptions::new()
-        .write(true)
-        .create(true)
-        .custom_flags(libc::O_DIRECT)
-        .open(&file_path)?;
-    print_hashmap("After creating file with O_DIRECT", &hashmap);
+    #[cfg(feature = "osync")]
+    let file = create_odirect_osync_file(&file_path);
+    #[cfg(not(feature = "osync"))]
+    let file = create_odirect_file(&file_path);
+    let cum = print_hashmap("After creating file with O_DIRECT", &hashmap, cum);
 
     let fd = file.as_raw_fd();
     let block: [u8; BLOCK_SIZE] = [1u8; BLOCK_SIZE];
@@ -357,9 +379,9 @@ fn sequential_direct(ebpf: &mut Ebpf, args: &Args) -> anyhow::Result<Histogram<u
             return Err(io::Error::last_os_error().into());
         }
     }
-    print_hashmap("After writing blocks with pwrite", &hashmap);
+    let cum = print_hashmap("After writing blocks with pwrite", &hashmap, cum);
     fsync_file_fd(fd)?;
-    print_hashmap("After fsyncing file", &hashmap);
+    let cum = print_hashmap("After fsyncing file", &hashmap, cum);
     Ok(histogram)
 }
 
@@ -371,14 +393,14 @@ fn sequential_direct_with_fallocate(
         Histogram::<u64>::new_with_bounds(1, 1_000_000_000, 3).expect("failed to create histogram");
     let map = ebpf.map_mut("EXT4INODE").unwrap();
     let hashmap: HashMap<_, EventInfoWrapper, u64> = HashMap::try_from(map)?;
-    print_hashmap("Initial", &hashmap);
+    let cum = std::collections::HashMap::new();
+    let cum = print_hashmap("Initial", &hashmap, cum);
     let file_path = file_name(&Function::SequentialDirectWithFallocate);
-    let file = OpenOptions::new()
-        .write(true)
-        .create(true)
-        .custom_flags(libc::O_DIRECT)
-        .open(&file_path)?;
-    print_hashmap("After creating file with O_DIRECT", &hashmap);
+    #[cfg(feature = "osync")]
+    let file = create_odirect_osync_file(&file_path);
+    #[cfg(not(feature = "osync"))]
+    let file = create_odirect_file(&file_path);
+    let cum = print_hashmap("After creating file with O_DIRECT", &hashmap, cum);
 
     let file_size = BLOCK_SIZE * args.num_blocks;
     let fd = file.as_raw_fd();
@@ -393,9 +415,9 @@ fn sequential_direct_with_fallocate(
             return Err(io::Error::last_os_error().into());
         }
     }
-    print_hashmap("After fallocate to file", &hashmap);
+    let cum = print_hashmap("After fallocate to file", &hashmap, cum);
     fsync_file_fd(fd)?;
-    print_hashmap("After fsyncing file", &hashmap);
+    let cum = print_hashmap("After fsyncing file", &hashmap, cum);
 
     let block: [u8; BLOCK_SIZE] = [1u8; BLOCK_SIZE];
     for i in 0..args.num_blocks {
@@ -415,9 +437,9 @@ fn sequential_direct_with_fallocate(
             return Err(io::Error::last_os_error().into());
         }
     }
-    print_hashmap("After writing blocks with pwrite", &hashmap);
+    let cum = print_hashmap("After writing blocks with pwrite", &hashmap, cum);
     fsync_file_fd(fd)?;
-    print_hashmap("After fsyncing file", &hashmap);
+    let cum = print_hashmap("After fsyncing file", &hashmap, cum);
     Ok(histogram)
 }
 
@@ -426,14 +448,14 @@ fn sequential_direct_double_writes(ebpf: &mut Ebpf, args: &Args) -> anyhow::Resu
         Histogram::<u64>::new_with_bounds(1, 1_000_000_000, 3).expect("failed to create histogram");
     let map = ebpf.map_mut("EXT4INODE").unwrap();
     let hashmap: HashMap<_, EventInfoWrapper, u64> = HashMap::try_from(map)?;
-    print_hashmap("Initial", &hashmap);
+    let cum = std::collections::HashMap::new();
+    let cum = print_hashmap("Initial", &hashmap, cum);
     let file_path = file_name(&Function::SequentialDirectDoubleWrites);
-    let file = OpenOptions::new()
-        .write(true)
-        .create(true)
-        .custom_flags(libc::O_DIRECT)
-        .open(&file_path)?;
-    print_hashmap("After creating file with O_DIRECT", &hashmap);
+    #[cfg(feature = "osync")]
+    let file = create_odirect_osync_file(&file_path);
+    #[cfg(not(feature = "osync"))]
+    let file = create_odirect_file(&file_path);
+    let cum = print_hashmap("After creating file with O_DIRECT", &hashmap, cum);
 
     let fd = file.as_raw_fd();
     let block: [u8; BLOCK_SIZE] = [1u8; BLOCK_SIZE];
@@ -451,7 +473,7 @@ fn sequential_direct_double_writes(ebpf: &mut Ebpf, args: &Args) -> anyhow::Resu
             return Err(io::Error::last_os_error().into());
         }
     }
-    print_hashmap("(1) After writing blocks with pwrite", &hashmap);
+    let cum = print_hashmap("(1) After writing blocks with pwrite", &hashmap, cum);
     // Seek back to the beginning of the file
     let ret = unsafe { libc::lseek(fd, 0, libc::SEEK_SET) };
     if ret < 0 {
@@ -475,9 +497,9 @@ fn sequential_direct_double_writes(ebpf: &mut Ebpf, args: &Args) -> anyhow::Resu
             return Err(io::Error::last_os_error().into());
         }
     }
-    print_hashmap("(2) After writing blocks with pwrite", &hashmap);
+    let cum = print_hashmap("(2) After writing blocks with pwrite", &hashmap, cum);
     fsync_file_fd(fd)?;
-    print_hashmap("After fsyncing file", &hashmap);
+    let cum = print_hashmap("After fsyncing file", &hashmap, cum);
     Ok(histogram)
 }
 
@@ -486,14 +508,14 @@ fn random_direct(ebpf: &mut Ebpf, args: &Args) -> anyhow::Result<Histogram<u64>>
         Histogram::<u64>::new_with_bounds(1, 1_000_000_000, 3).expect("failed to create histogram");
     let map = ebpf.map_mut("EXT4INODE").unwrap();
     let hashmap: HashMap<_, EventInfoWrapper, u64> = HashMap::try_from(map)?;
-    print_hashmap("Initial", &hashmap);
+    let cum = std::collections::HashMap::new();
+    let cum = print_hashmap("Initial", &hashmap, cum);
     let file_path = file_name(&Function::RandomDirect);
-    let file = OpenOptions::new()
-        .write(true)
-        .create(true)
-        .custom_flags(libc::O_DIRECT)
-        .open(&file_path)?;
-    print_hashmap("After creating file with O_DIRECT", &hashmap);
+    #[cfg(feature = "osync")]
+    let file = create_odirect_osync_file(&file_path);
+    #[cfg(not(feature = "osync"))]
+    let file = create_odirect_file(&file_path);
+    let cum = print_hashmap("After creating file with O_DIRECT", &hashmap, cum);
 
     let fd = file.as_raw_fd();
     let block: [u8; BLOCK_SIZE] = [1u8; BLOCK_SIZE];
@@ -519,9 +541,9 @@ fn random_direct(ebpf: &mut Ebpf, args: &Args) -> anyhow::Result<Histogram<u64>>
             return Err(io::Error::last_os_error().into());
         }
     }
-    print_hashmap("After writing blocks with pwrite", &hashmap);
+    let cum = print_hashmap("After writing blocks with pwrite", &hashmap, cum);
     fsync_file_fd(fd)?;
-    print_hashmap("After fsyncing file", &hashmap);
+    let cum = print_hashmap("After fsyncing file", &hashmap, cum);
     Ok(histogram)
 }
 
@@ -530,14 +552,14 @@ fn random_direct_with_fallocate(ebpf: &mut Ebpf, args: &Args) -> anyhow::Result<
         Histogram::<u64>::new_with_bounds(1, 1_000_000_000, 3).expect("failed to create histogram");
     let map = ebpf.map_mut("EXT4INODE").unwrap();
     let hashmap: HashMap<_, EventInfoWrapper, u64> = HashMap::try_from(map)?;
-    print_hashmap("Initial", &hashmap);
+    let cum = std::collections::HashMap::new();
+    let cum = print_hashmap("Initial", &hashmap, cum);
     let file_path = file_name(&Function::RandomDirectWithFallocate);
-    let file = OpenOptions::new()
-        .write(true)
-        .create(true)
-        .custom_flags(libc::O_DIRECT)
-        .open(&file_path)?;
-    print_hashmap("After creating file with O_DIRECT", &hashmap);
+    #[cfg(feature = "osync")]
+    let file = create_odirect_osync_file(&file_path);
+    #[cfg(not(feature = "osync"))]
+    let file = create_odirect_file(&file_path);
+    let cum = print_hashmap("After creating file with O_DIRECT", &hashmap, cum);
 
     let file_size = BLOCK_SIZE * args.num_blocks;
     let fd = file.as_raw_fd();
@@ -552,9 +574,9 @@ fn random_direct_with_fallocate(ebpf: &mut Ebpf, args: &Args) -> anyhow::Result<
             return Err(io::Error::last_os_error().into());
         }
     }
-    print_hashmap("After fallocate to file", &hashmap);
+    let cum = print_hashmap("After fallocate to file", &hashmap, cum);
     fsync_file_fd(fd)?;
-    print_hashmap("After fsyncing file", &hashmap);
+    let cum = print_hashmap("After fsyncing file", &hashmap, cum);
 
     let block: [u8; BLOCK_SIZE] = [1u8; BLOCK_SIZE];
     // create a permutation of (0..args.num_blocks) to simulate random writes
@@ -579,9 +601,9 @@ fn random_direct_with_fallocate(ebpf: &mut Ebpf, args: &Args) -> anyhow::Result<
             return Err(io::Error::last_os_error().into());
         }
     }
-    print_hashmap("After writing blocks with pwrite", &hashmap);
+    let cum = print_hashmap("After writing blocks with pwrite", &hashmap, cum);
     fsync_file_fd(fd)?;
-    print_hashmap("After fsyncing file", &hashmap);
+    let cum = print_hashmap("After fsyncing file", &hashmap, cum);
     Ok(histogram)
 }
 
@@ -590,14 +612,14 @@ fn random_direct_double_writes(ebpf: &mut Ebpf, args: &Args) -> anyhow::Result<H
         Histogram::<u64>::new_with_bounds(1, 1_000_000_000, 3).expect("failed to create histogram");
     let map = ebpf.map_mut("EXT4INODE").unwrap();
     let hashmap: HashMap<_, EventInfoWrapper, u64> = HashMap::try_from(map)?;
-    print_hashmap("Initial", &hashmap);
+    let cum = std::collections::HashMap::new();
+    let cum = print_hashmap("Initial", &hashmap, cum);
     let file_path = file_name(&Function::RandomDirectDoubleWrites);
-    let file = OpenOptions::new()
-        .write(true)
-        .create(true)
-        .custom_flags(libc::O_DIRECT)
-        .open(&file_path)?;
-    print_hashmap("After creating file with O_DIRECT", &hashmap);
+    #[cfg(feature = "osync")]
+    let file = create_odirect_osync_file(&file_path);
+    #[cfg(not(feature = "osync"))]
+    let file = create_odirect_file(&file_path);
+    let cum = print_hashmap("After creating file with O_DIRECT", &hashmap, cum);
 
     let fd = file.as_raw_fd();
     let block: [u8; BLOCK_SIZE] = [1u8; BLOCK_SIZE];
@@ -620,7 +642,7 @@ fn random_direct_double_writes(ebpf: &mut Ebpf, args: &Args) -> anyhow::Result<H
             return Err(io::Error::last_os_error().into());
         }
     }
-    print_hashmap("(1) After writing blocks with pwrite", &hashmap);
+    let cum = print_hashmap("(1) After writing blocks with pwrite", &hashmap, cum);
 
     let block = [2u8; BLOCK_SIZE];
     let mut permutation = (0..args.num_blocks).collect::<Vec<usize>>();
@@ -644,30 +666,42 @@ fn random_direct_double_writes(ebpf: &mut Ebpf, args: &Args) -> anyhow::Result<H
             return Err(io::Error::last_os_error().into());
         }
     }
-    print_hashmap("(2) After writing blocks with pwrite", &hashmap);
+    let cum = print_hashmap("(2) After writing blocks with pwrite", &hashmap, cum);
 
     fsync_file_fd(fd)?;
-    print_hashmap("After fsyncing file", &hashmap);
+    let cum = print_hashmap("After fsyncing file", &hashmap, cum);
     Ok(histogram)
 }
 
 //
 // Helper for printing hashmap contents
 //
-fn print_hashmap(title: &str, hashmap: &HashMap<&mut aya::maps::MapData, EventInfoWrapper, u64>) {
+// This function prints the difference between the current and previous values
+// of the hashmap. It returns the current hashmap in the std::collections::HashMap
+// format.
+fn print_hashmap(
+    title: &str,
+    hashmap: &HashMap<&mut aya::maps::MapData, EventInfoWrapper, u64>,
+    prev: std::collections::HashMap<EventInfoWrapper, u64>,
+) -> std::collections::HashMap<EventInfoWrapper, u64> {
+    let mut result = std::collections::HashMap::new();
     println!("**************** {} ***************", title);
     let mut count = 0;
     let mut iter = hashmap.iter();
-    while let Some(Ok((key, value))) = iter.next() {
+    while let Some(Ok((key, cum))) = iter.next() {
         count += 1;
-        if key.0.comm.starts_with(b"code") {
+        if !key.0.comm.starts_with(b"tracepoint") {
             continue;
         }
-        println!("key: {:?}, value: {:?}", key.0, value);
+        let prev_value = prev.get(&key).unwrap_or(&0);
+        let diff = cum - prev_value;
+        println!("key: {:?}, value: {}, cum: {}", key.0, diff, cum);
+        result.insert(key, cum);
     }
     if count == 0 {
         println!("No entries in the hashmap");
     }
+    result
 }
 
 //

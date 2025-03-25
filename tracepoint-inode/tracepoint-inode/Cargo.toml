@@ -3,6 +3,9 @@ name = "tracepoint-inode"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+osync = []
+
 [dependencies]
 tracepoint-inode-common = { path = "../tracepoint-inode-common", features = ["user"] }
 
@@ -37,3 +40,4 @@ tracepoint-inode-ebpf = { path = "../tracepoint-inode-ebpf" }
 [[bin]]
 name = "tracepoint-inode"
 path = "src/main.rs"
+

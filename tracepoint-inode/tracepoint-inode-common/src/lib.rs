@@ -1,6 +1,6 @@
 #![no_std]
 
-#[derive(Copy, Clone)]
+#[derive(PartialEq, Eq, Hash, Copy, Clone)]
 #[repr(C)]
 pub struct EventInfo {
     pub pid: u32,
@@ -32,7 +32,7 @@ impl core::fmt::Debug for EventInfo {
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(PartialEq, Eq, Hash, Copy, Clone)]
 #[repr(u32)]
 pub enum TracingEvent {
     Ext4MarkInodeDirty,

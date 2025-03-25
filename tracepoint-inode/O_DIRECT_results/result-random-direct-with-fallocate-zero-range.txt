@@ -1,0 +1,72 @@
+User process ID: 2577693
+Running function: random_direct_with_fallocate, fallocate_flag: zero_range, num_blocks: 10000
+**************** Initial ***************
+key: EventInfo { pid: 2577693, tgid: 2577693, comm: "tracepoint-inod\0", event: Ext4MarkInodeDirty }, value: 1, cum: 1
+**************** After creating file with O_DIRECT ***************
+key: EventInfo { pid: 2577693, tgid: 2577693, comm: "tracepoint-inod\0", event: Ext4MarkInodeDirty }, value: 4, cum: 5
+**************** After fallocate to file ***************
+key: EventInfo { pid: 2577693, tgid: 2577693, comm: "tracepoint-inod\0", event: Ext4AllocateBlocks }, value: 1, cum: 1
+key: EventInfo { pid: 2577693, tgid: 2577693, comm: "tracepoint-inod\0", event: Ext4MarkInodeDirty }, value: 3, cum: 8
+key: EventInfo { pid: 2577693, tgid: 2577693, comm: "tracepoint-inod\0", event: Ext4ExtMapBlocksEnter }, value: 2, cum: 2
+**************** After fsyncing file ***************
+key: EventInfo { pid: 2577693, tgid: 2577693, comm: "tracepoint-inod\0", event: Ext4AllocateBlocks }, value: 0, cum: 1
+key: EventInfo { pid: 2577693, tgid: 2577693, comm: "tracepoint-inod\0", event: Ext4MarkInodeDirty }, value: 1, cum: 9
+key: EventInfo { pid: 2577693, tgid: 2577693, comm: "tracepoint-inod\0", event: Ext4ExtMapBlocksEnter }, value: 0, cum: 2
+**************** After writing blocks with pwrite ***************
+key: EventInfo { pid: 2577693, tgid: 2577693, comm: "tracepoint-inod\0", event: Ext4AllocateBlocks }, value: 27, cum: 28
+key: EventInfo { pid: 2577693, tgid: 2577693, comm: "tracepoint-inod\0", event: Ext4MarkInodeDirty }, value: 10226, cum: 10235
+key: EventInfo { pid: 2577693, tgid: 2577693, comm: "tracepoint-inod\0", event: Ext4ExtMapBlocksEnter }, value: 20000, cum: 20002
+**************** After fsyncing file ***************
+key: EventInfo { pid: 2577693, tgid: 2577693, comm: "tracepoint-inod\0", event: Ext4AllocateBlocks }, value: 0, cum: 28
+key: EventInfo { pid: 2577693, tgid: 2577693, comm: "tracepoint-inod\0", event: Ext4MarkInodeDirty }, value: 1, cum: 10236
+key: EventInfo { pid: 2577693, tgid: 2577693, comm: "tracepoint-inod\0", event: Ext4ExtMapBlocksEnter }, value: 0, cum: 20002
+     Value | Histogram                                          | Count(%)
+----------------------------------------------------------------------------------
+<    10000 |                                                    |          0(0.00)
+     10999 |                                                    |          0(0.00)
+     11999 |                                                    |          0(0.00)
+     12999 |                                                    |          0(0.00)
+     13999 |                                                    |          0(0.00)
+     14999 |                                                    |          0(0.00)
+     15999 |                                                    |          2(0.00)
+     16999 | *********                                          |       1720(0.17)
+     17999 | ******************************                     |       5969(0.60)
+     18999 | ********                                           |       1666(0.17)
+     19999 | *                                                  |        142(0.01)
+     20999 | *                                                  |        105(0.01)
+     21999 |                                                    |         41(0.00)
+     22999 |                                                    |         17(0.00)
+     23999 |                                                    |          6(0.00)
+     24999 |                                                    |          5(0.00)
+     25999 |                                                    |          9(0.00)
+     26999 |                                                    |          4(0.00)
+     27999 |                                                    |          4(0.00)
+     28999 |                                                    |         18(0.00)
+     29999 |                                                    |         32(0.00)
+     30999 |                                                    |          5(0.00)
+     31999 |                                                    |          5(0.00)
+     32999 |                                                    |          2(0.00)
+     33999 |                                                    |          1(0.00)
+     34999 |                                                    |          4(0.00)
+     35999 |                                                    |          0(0.00)
+     36999 |                                                    |          1(0.00)
+     37999 |                                                    |          2(0.00)
+     38999 |                                                    |          6(0.00)
+     39999 |                                                    |         37(0.00)
+     40999 |                                                    |         41(0.00)
+     41999 |                                                    |         22(0.00)
+     42999 |                                                    |         10(0.00)
+     43999 |                                                    |         32(0.00)
+     44999 |                                                    |         32(0.00)
+     45999 |                                                    |         21(0.00)
+     46999 |                                                    |         11(0.00)
+     47999 |                                                    |          7(0.00)
+     48999 |                                                    |          4(0.00)
+     49999 |                                                    |          2(0.00)
+>    50000 |                                                    |         14(0.00)
+Mean: 18509.35879999997
+2th percentile: 16607
+25th percentile: 17103
+Median: 17343
+75th percentile: 17967
+98th percentile: 39903
