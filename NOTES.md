@@ -1,5 +1,12 @@
 # Notes
 
+## Project creation and execution
+
+```shell
+cargo generate https://github.com/aya-rs/aya-template
+RUST_LOG=info cargo run --release --config 'target."cfg(all())".runner="sudo -E"'
+```
+
 ## Tracepoints
 
 You can list available tracepoints in your Linux system using one of the following methods:
@@ -98,3 +105,7 @@ For user-related IDs (from bpf_get_current_uid_gid()):
   - **UID (lower 32 bits):** Represents the User ID of the current task.
 
 This diagram and explanation should help clarify that TGID and GID come from different 64-bit sources and represent entirely different concepts—process identification versus user group identification.
+
+## Directly attaching to user functions
+
+* https://eunomia.dev/en/tutorials/37-uprobe-rust/
